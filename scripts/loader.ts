@@ -5,6 +5,9 @@ import YAML from 'js-yaml'
 import type { Quiz, QuizMetaInfo } from './types'
 import { defaultLocale, supportedLocales } from './locales'
 
+const orderedQuizDirRE = /^(?<order>\d+)-(?<difficulty>[a-z]+)-(?<no>\d+)-(?<slug>.+)$/
+const legacyQuizDirRE = /^(?<no>\d+)-(?<difficulty>[a-z]+)-(?<slug>.+)$/
+
 export async function loadFile(filepath: string) {
   if (fs.existsSync(filepath))
     return await fs.readFile(filepath, 'utf-8')
@@ -67,6 +70,26 @@ export function loadInfo(s: string): Partial<QuizMetaInfo> | undefined {
 
 export const QUIZ_ROOT = path.resolve(__dirname, '../questions')
 
+function parseQuizDir(dir: string) {
+  const orderedMatch = dir.match(orderedQuizDirRE)
+  if (orderedMatch?.groups) {
+    return {
+      no: Number(orderedMatch.groups.no),
+      difficulty: orderedMatch.groups.difficulty,
+    }
+  }
+
+  const legacyMatch = dir.match(legacyQuizDirRE)
+  if (legacyMatch?.groups) {
+    return {
+      no: Number(legacyMatch.groups.no),
+      difficulty: legacyMatch.groups.difficulty,
+    }
+  }
+
+  throw new Error(`Invalid quiz directory name: ${dir}`)
+}
+
 export async function loadQuizzes(): Promise<Quiz[]> {
   const folders = await fg('{0..9}*-*', {
     onlyDirectories: true,
@@ -81,9 +104,11 @@ export async function loadQuizzes(): Promise<Quiz[]> {
 }
 
 export async function loadQuiz(dir: string): Promise<Quiz> {
+  const { no, difficulty } = parseQuizDir(dir)
+
   return {
-    no: Number(dir.replace(/^(\d+)-.*/, '$1')),
-    difficulty: dir.replace(/^\d+-(.+?)-.*$/, '$1') as any,
+    no,
+    difficulty: difficulty as any,
     path: dir,
     info: await loadLocaleVariations(path.join(QUIZ_ROOT, dir, 'info.yml'), loadInfo),
     readme: await loadLocaleVariations(path.join(QUIZ_ROOT, dir, 'README.md'), readmeCleanUp),
@@ -93,7 +118,8 @@ export async function loadQuiz(dir: string): Promise<Quiz> {
 }
 
 export async function loadQuizByNo(no: number | string) {
-  const folders = await fg(`${no}-*`, {
+  const normalized = String(no).padStart(5, '0')
+  const folders = await fg([`${normalized}-*`, `??-*-${normalized}-*`], {
     onlyDirectories: true,
     cwd: QUIZ_ROOT,
   })

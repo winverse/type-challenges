@@ -39,6 +39,15 @@ const Messages = {
   },
 }
 
+const DifficultyOrder: Record<string, string> = {
+  warm: '01',
+  easy: '02',
+  medium: '03',
+  hard: '04',
+  extreme: '05',
+  pending: '99',
+}
+
 export const getOthers = <A, B>(condition: boolean, a: A, b: B): A | B => condition ? a : b
 
 const action: Action = async (github, context, core) => {
@@ -263,7 +272,8 @@ function getTimestampBadge() {
 }
 
 export function getQuestionFullName(no: number, difficulty: string, title: string) {
-  return `${String(no).padStart(5, '0')}-${difficulty}-${slug(
+  const order = DifficultyOrder[difficulty] || '99'
+  return `${order}-${difficulty}-${String(no).padStart(5, '0')}-${slug(
     title.replace(/\./g, '-').replace(/<.*>/g, ''),
     { tone: false },
   )}`
