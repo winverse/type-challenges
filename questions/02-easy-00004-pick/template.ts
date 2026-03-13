@@ -1,1 +1,2 @@
-type MyPick<T, K> = any
+type MyPick<T, K> = { []}
+
