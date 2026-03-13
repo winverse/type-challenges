@@ -1,1 +1,1 @@
-type MyPick<T, K> = { [p in K]: T[K] }
+type MyPick<T, K extends keyof T> = { [P in K]: T[P] }
