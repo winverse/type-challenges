@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
     "target": "es2017",
-    "lib": ["ESNext"],
-    "module": "esnext",
-    "moduleResolution": "node",
+    "lib": ["ESNext", "DOM"],
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
     "allowJs": true,
     "strict": true,
     "noImplicitReturns": true,
